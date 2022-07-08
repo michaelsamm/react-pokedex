@@ -1,24 +1,78 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from 'react'
+
+import Header from './components/header'
+import SearchForm from './components/searchForm'
+import PokemonDetails from './components/pokemonDetails';
+import Spinner from './components/spinner';
 
 function App() {
+  const [pokemon, setPokemon] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('ninetales')
+  
+  useEffect(() => {
+    getPokemon()
+  }, [])
+
+  const getPokemon = () => {
+    setLoading(true)
+    fetch(`https://pokeapi.co/api/v2/pokemon/${searchTerm}`)
+    .then(res => res.json())
+    .then(json => setPokemon(json))
+    .catch(err => {
+      setError('Pokemon not found')
+      reset()
+    })
+    .finally(() => setLoading(false))
+  }
+
+  const handleInputChange = (e) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault()
+    if (!!searchTerm) {
+      getPokemon()
+    }
+  }
+
+  const reset = () => {
+    setSearchTerm('')
+    setError(null)
+    setPokemon(null)
+  }
+
+  const renderUI = () => {
+    if (loading) {
+      return <Spinner />
+    }
+    else if (error) {
+      return <p className='error'>{error}</p>
+    }
+    else if (pokemon) {
+      return <PokemonDetails pokemon={pokemon}/>
+    }
+    else if (!searchTerm) {
+      return <p>Search a pokemon to get started!</p>
+    }
+    else {
+      return null
+    }
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+    <Header />
+    <SearchForm 
+      searchTerm={searchTerm}
+      handleInputChange={handleInputChange}
+      handleFormSubmit={handleFormSubmit}
+      reset={reset}
+    />
+    { renderUI() }
+    </>
   );
 }
 
